@@ -26,21 +26,51 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // --- Icon Wrapper Component for Lucide (since we are not using lucide-react in HTML) ---
+        // --- Icon Wrapper Component for Lucide (Fixed for React 18) ---
+        // Reactの管理下にあるDOMをLucideが書き換えてしまうことによるエラーを防ぐため、
+        // refを使用してReactの管理外（Black Box）でアイコンを描画します。
         const Icon = ({ name, size = 24, className, ...props }) => {
+            const ref = useRef(null);
+
             useEffect(() => {
-                lucide.createIcons();
-            });
-            return <i data-lucide={name} className={className} style={{ width: size, height: size }} {...props}></i>;
+                if (ref.current) {
+                    // クリーンアップ
+                    ref.current.innerHTML = '';
+                    
+                    // Lucideが変換するための要素を作成
+                    const i = document.createElement('i');
+                    i.setAttribute('data-lucide', name);
+                    i.setAttribute('width', size);
+                    i.setAttribute('height', size);
+                    
+                    // 作成した要素をマウント
+                    ref.current.appendChild(i);
+                    
+                    // この要素に対してのみLucideを実行
+                    lucide.createIcons({
+                        root: ref.current,
+                        nameAttr: 'data-lucide'
+                    });
+                }
+            }, [name, size]); // 名前やサイズが変わった時のみ再描画
+
+            // ラッパーのspan要素（ここにはclassNameやイベントハンドラを適用）
+            return (
+                <span 
+                    ref={ref} 
+                    className={className} 
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }} 
+                    {...props}
+                />
+            );
         };
 
-        // Mapping Lucide icons used in the code
+        // Icons
         const ChevronRight = (props) => <Icon name="chevron-right" {...props} />;
         const ArrowRight = (props) => <Icon name="arrow-right" {...props} />;
         const CheckCircle2 = (props) => <Icon name="check-circle-2" {...props} />;
-        const BarChart3 = (props) => <Icon name="bar-chart-3" {...props} />;
         const Users = (props) => <Icon name="users" {...props} />;
         const Layers = (props) => <Icon name="layers" {...props} />;
         const Rocket = (props) => <Icon name="rocket" {...props} />;
@@ -52,18 +82,13 @@
         const Lightbulb = (props) => <Icon name="lightbulb" {...props} />;
         const Briefcase = (props) => <Icon name="briefcase" {...props} />;
         const ChevronDown = (props) => <Icon name="chevron-down" {...props} />;
-        const ExternalLink = (props) => <Icon name="external-link" {...props} />;
         const ArrowLeft = (props) => <Icon name="arrow-left" {...props} />;
         const Mail = (props) => <Icon name="mail" {...props} />;
         const Calendar = (props) => <Icon name="calendar" {...props} />;
-        const MessageSquare = (props) => <Icon name="message-square" {...props} />;
-        const BookOpen = (props) => <Icon name="book-open" {...props} />;
         const PenTool = (props) => <Icon name="pen-tool" {...props} />;
-        const LayoutTemplate = (props) => <Icon name="layout-template" {...props} />;
-
+        const Check = (props) => <Icon name="check" {...props} />;
 
         // --- Mock Data ---
-
         const allInsights = [
             {
                 id: 1,
@@ -88,30 +113,6 @@
                 date: '2026.01.15',
                 tags: ['市場分析', '戦略'],
                 summary: 'デスクトップリサーチだけでは見えない「顧客の不」を見つけるためのインタビュー設計と、そこから勝ち筋を見出すプロセスについて。'
-            },
-            {
-                id: 4,
-                category: '推進・組織',
-                title: '「出島」組織はなぜ失敗するのか？本体との軋轢を解消するPMI的アプローチ',
-                date: '2026.01.08',
-                tags: ['組織論', '社内政治'],
-                summary: '新規事業部を別会社化（出島）しても、結局は本体のアセットが必要になります。最初から「混ぜる」ことを前提とした組織設計の要諦とは。'
-            },
-            {
-                id: 5,
-                category: 'PoC→ローンチ',
-                title: 'MVP開発の落とし穴：機能は最小限でも「体験」は最大化せよ',
-                date: '2025.12.20',
-                tags: ['プロダクト開発', 'UX'],
-                summary: '「Minimum Viable Product」を「低品質な製品」と履き違えていませんか？顧客が価値を感じるコア体験を削ぎ落とさないための要件定義術。'
-            },
-            {
-                id: 6,
-                category: '勝ち筋設計',
-                title: 'サブスクリプションモデルの収益化：LTV/CACの罠と「解約抑止」の初期設計',
-                date: '2025.12.05',
-                tags: ['SaaS', 'KPI設計'],
-                summary: 'サービス開始直後はチャルンレート（解約率）が暴れがちです。獲得コスト（CAC）をかける前に整備すべき、オンボーディングの重要指標について。'
             }
         ];
 
@@ -139,30 +140,6 @@
                 period: '6ヶ月',
                 tags: ['戦略策定', 'アライアンス'],
                 description: '自社素材の環境価値を再定義し、欧州市場への参入シナリオを策定。現地のパートナー候補選定から交渉シナリオ作成までを行い、提携を実現。'
-            },
-            {
-                id: 4,
-                industry: 'デジタルサービス',
-                title: 'SaaSスタートアップ：エンタープライズ向けセールス組織の立ち上げ',
-                period: '4ヶ月',
-                tags: ['営業戦略', '組織開発'],
-                description: 'SMB向けで成長してきたSaaSのエンタープライズ開拓を支援。大手企業の購買プロセスに合わせたセールスマテリアルの再構築と、フィールドセールス部隊の型化を実施。'
-            },
-            {
-                id: 5,
-                industry: '製造業',
-                title: '精密機器メーカー：AI外観検査ソリューションの事業化検証',
-                period: '10ヶ月',
-                tags: ['新規事業', 'AI'],
-                description: '社内技術シーズの事業化検証。競合ひしめく外観検査AI市場における「勝ち筋」を見つけるため、30社以上の現場ヒアリングを実施し、特化型ニッチ戦略を策定。'
-            },
-            {
-                id: 6,
-                industry: 'EC・小売',
-                title: '大手GMS：リテールメディア事業の構想とデータ活用基盤の設計',
-                period: '14ヶ月',
-                tags: ['データ活用', '新規事業'],
-                description: '店舗とアプリの顧客データを統合し、広告主向けの新たな媒体価値を創出。プライバシーポリシーの改定からデータ基盤の要件定義、初期商品の設計まで包括的に支援。'
             }
         ];
 
@@ -173,11 +150,6 @@
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
             const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-            // Re-run icons when page changes or menu toggles
-            useEffect(() => {
-                lucide.createIcons();
-            });
 
             const navigateTo = (page, sectionId = null) => {
                 setCurrentPage(page);
@@ -253,6 +225,7 @@
                     {currentPage === 'cases' && <CasesPage navigateTo={navigateTo} />}
                     {currentPage === 'insights' && <InsightsPage navigateTo={navigateTo} />}
                     {currentPage === 'contact' && <ContactPage navigateTo={navigateTo} />}
+                    {currentPage === 'thanks' && <ThanksPage navigateTo={navigateTo} />}
                 </div>
 
                 {/* Footer (Always visible) */}
@@ -302,6 +275,8 @@
             );
         };
 
+        // --- Page Components ---
+
         const HomePage = ({ navigateTo }) => (
         <>
             {/* Hero Section */}
@@ -319,7 +294,7 @@
                     綺麗なスライドだけでなく、実装と事業化までやり切ります。
                 </h2>
 
-                {/* Representative Trust Badge (New) */}
+                {/* Representative Trust Badge */}
                 <div className="bg-white/80 backdrop-blur-sm border border-slate-200 p-4 rounded-lg mb-10 max-w-2xl shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                     <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-slate-400">
@@ -329,10 +304,10 @@
                     <div>
                     <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Representative Partner</p>
                     <p className="text-sm text-slate-800 font-bold leading-snug">
-                        新規事業一筋7年。0→1の失敗・成功パターンを知り尽くしたプロが担当。
+                        新規事業一筋10年以上。0→1の失敗・成功パターンを知り尽くしたプロが担当。
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
-                        大企業 × スタートアップ × 戦略コンサルの3つの視点で、泥臭い実行まで支援します。
+                        大企業 × スタートアップ × 戦略コンサルの3つの経験を持つプロフェッショナルが、新規事業の戦略立案から泥臭い実行まで支援します。
                     </p>
                     </div>
                 </div>
@@ -355,7 +330,7 @@
             </div>
             </section>
 
-            {/* Target/Pain Points Section (Why Need Us) */}
+            {/* Target/Pain Points Section */}
             <section id="problems" className="py-20 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
@@ -390,16 +365,10 @@
                     </div>
                 ))}
                 </div>
-                
-                <div className="mt-8 text-center">
-                    <p className="text-xs text-slate-400">
-                    ※ 短期的なPL改善のみを目的としたコスト削減案件などは、強みを発揮できないためお断りする場合がございます。
-                    </p>
-                </div>
             </div>
             </section>
 
-            {/* 5 Reasons & Comparison Section */}
+            {/* 5 Reasons */}
             <section id="reasons" className="py-24 bg-slate-900 text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-16">
@@ -411,7 +380,6 @@
                 </p>
                 </div>
 
-                {/* 5 Reasons Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
                 {[
                     {
@@ -447,53 +415,10 @@
                     </div>
                 ))}
                 </div>
-
-                {/* Comparison Table */}
-                <div className="bg-white rounded-lg overflow-hidden shadow-xl text-slate-800">
-                <div className="bg-indigo-900 text-white p-4 text-center font-bold border-b border-indigo-800">
-                    他社プレイヤーとのアプローチの違い
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-                        <tr>
-                        <th className="px-6 py-4 font-medium w-1/4">比較項目</th>
-                        <th className="px-6 py-4 font-bold text-indigo-900 bg-indigo-50 w-1/4 border-x border-indigo-100">Uni Consulting</th>
-                        <th className="px-6 py-4 font-medium w-1/6">総合コンサル</th>
-                        <th className="px-6 py-4 font-medium w-1/6">SIer / 開発会社</th>
-                        <th className="px-6 py-4 font-medium w-1/6">VC / アクセラ</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        <tr className="hover:bg-slate-50">
-                        <td className="px-6 py-4 font-bold text-slate-700">ゴール設定</td>
-                        <td className="px-6 py-4 bg-indigo-50/30 text-indigo-900 font-bold border-x border-indigo-50">事業の立ち上げ・売上</td>
-                        <td className="px-6 py-4 text-slate-600">戦略資料の納品</td>
-                        <td className="px-6 py-4 text-slate-600">システムの納品</td>
-                        <td className="px-6 py-4 text-slate-600">出資・事業案発表</td>
-                        </tr>
-                        <tr className="hover:bg-slate-50">
-                        <td className="px-6 py-4 font-bold text-slate-700">関わり方</td>
-                        <td className="px-6 py-4 bg-indigo-50/30 text-indigo-900 font-bold border-x border-indigo-50">実行体制の内側に入る</td>
-                        <td className="px-6 py-4 text-slate-600">外部からの助言・管理</td>
-                        <td className="px-6 py-4 text-slate-600">要件通りの実装</td>
-                        <td className="px-6 py-4 text-slate-600">メンタリング</td>
-                        </tr>
-                        <tr className="hover:bg-slate-50">
-                        <td className="px-6 py-4 font-bold text-slate-700">得意領域</td>
-                        <td className="px-6 py-4 bg-indigo-50/30 text-indigo-900 font-bold border-x border-indigo-50">0→1 / 1→10の泥臭い実行</td>
-                        <td className="px-6 py-4 text-slate-600">全社戦略・大規模変革</td>
-                        <td className="px-6 py-4 text-slate-600">大規模開発・運用</td>
-                        <td className="px-6 py-4 text-slate-600">資金調達・ピッチ</td>
-                        </tr>
-                    </tbody>
-                    </table>
-                </div>
-                </div>
             </div>
             </section>
 
-            {/* Process Section */}
+            {/* Process */}
             <section id="process" className="py-20 bg-slate-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
@@ -505,9 +430,7 @@
                 </div>
 
                 <div className="relative">
-                {/* Connecting Line (Desktop) */}
                 <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-slate-200 -z-10 transform -translate-y-1/2"></div>
-                
                 <div className="grid md:grid-cols-4 gap-6">
                     {[
                     { step: "STEP 01", title: "構想・言語化", desc: "強みの棚卸し、市場機会の探索、事業コンセプトの言語化" },
@@ -519,7 +442,6 @@
                         <div className="text-xs font-bold text-indigo-600 mb-2 bg-indigo-50 inline-block px-2 py-1 rounded">{item.step}</div>
                         <h3 className="text-lg font-bold text-slate-900 mb-3">{item.title}</h3>
                         <p className="text-sm text-slate-600">{item.desc}</p>
-                        {/* Arrow for mobile */}
                         <div className="md:hidden flex justify-center mt-4">
                             {idx < 3 && <ChevronDown className="text-slate-300" />}
                         </div>
@@ -530,7 +452,7 @@
             </div>
             </section>
 
-            {/* Service Plans Section (NEW) */}
+            {/* Service Plans Section */}
             <section id="plans" className="py-20 bg-white border-t border-slate-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
@@ -626,7 +548,7 @@
             </div>
             </section>
 
-            {/* Case Notes Section (Top 3) */}
+            {/* Case Notes Section */}
             <section id="cases" className="py-20 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-end mb-10">
@@ -661,11 +583,6 @@
                     </div>
                     </div>
                 ))}
-                </div>
-                <div className="mt-8 md:hidden text-center">
-                    <button onClick={() => navigateTo('cases')} className="inline-flex items-center text-sm font-bold text-indigo-600">
-                    事例一覧を見る <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
                 </div>
             </div>
             </section>
@@ -702,77 +619,6 @@
                         </div>
                     </article>
                 ))}
-                </div>
-            </div>
-            </section>
-
-            {/* Consultation Section */}
-            <section id="consultation" className="py-20 bg-white border-t border-slate-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                <h2 className="text-3xl font-bold text-slate-900">まずは30分、壁打ちしませんか？</h2>
-                <p className="mt-4 text-slate-600">
-                    現状の課題感をお聞かせください。整理と次の一手をご提示します。
-                </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                {/* 30min Plan */}
-                <div className="bg-slate-50 rounded border-t-4 border-indigo-900 shadow-sm p-8 flex flex-col h-full relative">
-                    <div className="absolute top-0 right-0 bg-white text-indigo-900 text-xs font-bold px-3 py-1 rounded-bl border-b border-l border-slate-100">RECOMMENDED</div>
-                    <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-indigo-100 p-2 rounded-full"><Clock className="w-6 h-6 text-indigo-900" /></div>
-                    <h3 className="text-xl font-bold text-slate-900">初回相談（30分）</h3>
-                    </div>
-                    <ul className="space-y-4 mb-8 flex-1">
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-700">現状のヒアリング</span>
-                    </li>
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-700">論点整理（強み／顧客／競合／実装）</span>
-                    </li>
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-600 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-700 font-bold">次の一手・方向性の提示</span>
-                    </li>
-                    </ul>
-                    <div className="bg-white p-4 rounded text-sm text-slate-600 border border-slate-200 shadow-sm">
-                    <p className="font-bold mb-1 flex items-center gap-2 text-indigo-900">
-                        <FileText className="w-4 h-4"/> 持ち帰れるアウトプット
-                    </p>
-                    論点整理メモ・ネクストアクション案
-                    </div>
-                </div>
-
-                {/* 60min Plan */}
-                <div className="bg-white rounded border-t-4 border-slate-400 shadow-sm p-8 flex flex-col h-full opacity-90">
-                    <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-slate-100 p-2 rounded-full"><Clock className="w-6 h-6 text-slate-500" /></div>
-                    <h3 className="text-xl font-bold text-slate-700">じっくり相談（60分）</h3>
-                    </div>
-                    <ul className="space-y-4 mb-8 flex-1">
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-600">30分内容 ＋ 勝ち筋の仮説整理</span>
-                    </li>
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-600">実装・社内体制のリアリティチェック</span>
-                    </li>
-                    <li className="flex items-start">
-                        <CheckCircle2 className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-600">PoC〜立ち上げまでの工程表ラフ案</span>
-                    </li>
-                    </ul>
-                    <div className="bg-slate-50 p-4 rounded text-sm text-slate-600 border border-slate-100">
-                        <p className="font-bold mb-1 flex items-center gap-2">
-                        <FileText className="w-4 h-4"/> 持ち帰れるアウトプット
-                    </p>
-                    仮説検証プラン・簡易ロードマップ
-                    </div>
-                </div>
                 </div>
             </div>
             </section>
@@ -834,182 +680,40 @@
         </>
         );
 
-        const CasesPage = ({ navigateTo }) => {
-            const [filter, setFilter] = useState('All');
-            const industries = ['All', '自動車・モビリティ', '製造業', 'EC・小売', 'デジタルサービス'];
-
-            const filteredCases = filter === 'All' 
-                ? allCaseNotes 
-                : allCaseNotes.filter(n => n.industry === filter);
-
-            useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                lucide.createIcons();
-            }, [filter]);
-
-            return (
-                <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
-                <button onClick={() => navigateTo('home')} className="mb-6 flex items-center text-slate-500 hover:text-indigo-900 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> トップへ戻る
-                </button>
-
-                <div className="mb-12">
-                    <h1 className="text-4xl font-bold text-slate-900 mb-4">支援事例一覧</h1>
-                    <p className="text-slate-600">
-                    様々な業界での「構想〜実装」までの支援実績の一部をご紹介します。<br/>
-                    守秘義務の関係上、掲載できない事例も多数ございます。詳細はお問い合わせください。
-                    </p>
-                </div>
-
-                {/* Filter */}
-                <div className="mb-10 flex flex-wrap gap-2">
-                    {industries.map(ind => (
-                    <button
-                        key={ind}
-                        onClick={() => setFilter(ind)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        filter === ind 
-                        ? 'bg-indigo-900 text-white' 
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                    >
-                        {ind}
-                    </button>
-                    ))}
-                </div>
-
-                {/* Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                    {filteredCases.map((note) => (
-                    <div key={note.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                        <div className="p-6 flex flex-col h-full">
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded">{note.industry}</span>
-                            <span className="text-slate-400 text-xs">{note.period}</span>
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-3 leading-snug">
-                            {note.title}
-                        </h3>
-                        <p className="text-slate-600 text-sm leading-relaxed mb-4 flex-grow">
-                            {note.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50">
-                            {note.tags.map((tag, tIdx) => (
-                            <span key={tIdx} className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100">#{tag}</span>
-                            ))}
-                        </div>
-                        </div>
-                    </div>
-                    ))}
-                </div>
-
-                {/* CTA in Cases */}
-                <div className="bg-indigo-50 rounded-2xl p-8 md:p-12 text-center">
-                    <h3 className="text-2xl font-bold text-indigo-900 mb-4">類似の課題をお持ちですか？</h3>
-                    <p className="text-slate-600 mb-8">
-                    貴社の業界・状況に合わせた事例のご紹介や、<br className="hidden md:block"/>
-                    アプローチ方法のご提案も可能です。まずはお気軽にご相談ください。
-                    </p>
-                    <button onClick={() => navigateTo('contact')} className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-indigo-900 rounded hover:bg-indigo-800 transition-colors shadow-md">
-                    事例について詳しく聞く
-                    <ChevronRight className="ml-2 w-5 h-5" />
-                    </button>
-                </div>
-                </div>
-            );
-        };
-
-        const InsightsPage = ({ navigateTo }) => {
-            const [filter, setFilter] = useState('All');
-            const categories = ['All', '強み言語化', '勝ち筋設計', '競合・顧客理解', '推進・組織', 'PoC→ローンチ'];
-
-            const filteredInsights = filter === 'All' 
-                ? allInsights 
-                : allInsights.filter(i => i.category === filter);
-
-            useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                lucide.createIcons();
-            }, [filter]);
-
-            return (
-                <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
-                <button onClick={() => navigateTo('home')} className="mb-6 flex items-center text-slate-500 hover:text-indigo-900 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> トップへ戻る
-                </button>
-
-                <div className="mb-12">
-                    <h1 className="text-4xl font-bold text-slate-900 mb-4">知見・ナレッジ</h1>
-                    <p className="text-slate-600">
-                    新規事業開発における思考の枠組みや、実践的なノウハウを発信しています。<br/>
-                    表面的なトレンドではなく、事業を前に進めるための「本質」をお伝えします。
-                    </p>
-                </div>
-
-                {/* Filter */}
-                <div className="mb-10 flex flex-wrap gap-2">
-                    {categories.map(cat => (
-                    <button
-                        key={cat}
-                        onClick={() => setFilter(cat)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        filter === cat 
-                        ? 'bg-indigo-900 text-white' 
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                    >
-                        {cat}
-                    </button>
-                    ))}
-                </div>
-
-                {/* Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                    {filteredInsights.map((insight) => (
-                    <article key={insight.id} className="flex flex-col group cursor-pointer bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-all">
-                            <div className="mb-3 flex items-center gap-3 text-xs">
-                            <span className="text-indigo-600 font-bold uppercase tracking-wider">{insight.category}</span>
-                            <span className="text-slate-400">{insight.date}</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-indigo-900 transition-colors">
-                            {insight.title}
-                            </h3>
-                            <p className="text-slate-600 text-sm leading-relaxed mb-4 flex-grow">
-                            {insight.summary}
-                            </p>
-                            <div className="flex flex-wrap gap-2 mb-4">
-                            {insight.tags.map((tag, tIdx) => (
-                                <span key={tIdx} className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100">#{tag}</span>
-                            ))}
-                            </div>
-                            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center text-sm font-bold text-slate-900 group-hover:text-indigo-700">
-                            Read More <ArrowRight className="w-4 h-4 ml-2" />
-                            </div>
-                        </article>
-                    ))}
-                </div>
-
-                {/* CTA in Insights */}
-                <div className="bg-slate-900 rounded-2xl p-8 md:p-12 text-center text-white">
-                    <h3 className="text-2xl font-bold mb-4">読んだだけでは解決しない課題がありますか？</h3>
-                    <p className="text-indigo-200 mb-8">
-                    記事の内容を自社に当てはめて考えたい場合や、具体的な壁打ちをご希望の場合は、<br className="hidden md:block"/>
-                    お気軽に無料相談をご利用ください。
-                    </p>
-                    <button onClick={() => navigateTo('contact')} className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-indigo-900 bg-white rounded hover:bg-indigo-50 transition-colors shadow-md">
-                    無料相談について見る
-                    <ChevronRight className="ml-2 w-5 h-5" />
-                    </button>
-                </div>
-                </div>
-            );
-        };
-
         const ContactPage = ({ navigateTo }) => {
+            const [isSubmitting, setIsSubmitting] = useState(false);
+
             useEffect(() => {
                 window.scrollTo({ top: 0, behavior: 'instant' });
                 lucide.createIcons();
             }, []);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                const form = e.target;
+                const data = new FormData(form);
+
+                try {
+                    const response = await fetch("https://formspree.io/f/mykdyook", {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        navigateTo('thanks');
+                    } else {
+                        alert("送信に失敗しました。時間をおいて再度お試しください。");
+                        setIsSubmitting(false);
+                    }
+                } catch (error) {
+                    alert("通信エラーが発生しました。");
+                    setIsSubmitting(false);
+                }
+            };
 
             return (
                 <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
@@ -1066,10 +770,10 @@
                     {/* Right: Form */}
                     <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8">
                     <h2 className="text-xl font-bold text-slate-900 mb-6">無料相談フォーム</h2>
-                    <form className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                         <label htmlFor="type" className="block text-sm font-medium text-slate-700 mb-1">ご相談内容の種別 <span className="text-red-500">*</span></label>
-                        <select id="type" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" required>
+                        <select id="type" name="type" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" required>
                             <option value="">選択してください</option>
                             <option value="30min">初回無料相談（30分〜60分）</option>
                             <option value="project">具体的なプロジェクトのご依頼</option>
@@ -1080,36 +784,67 @@
                         <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">お名前 <span className="text-red-500">*</span></label>
-                            <input type="text" id="name" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="山田 太郎" required />
+                            <input type="text" id="name" name="name" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="山田 太郎" required />
                         </div>
                         <div>
                             <label htmlFor="company" className="block text-sm font-medium text-slate-700 mb-1">会社名 <span className="text-red-500">*</span></label>
-                            <input type="text" id="company" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="株式会社〇〇" required />
+                            <input type="text" id="company" name="company" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="株式会社〇〇" required />
                         </div>
                         </div>
 
                         <div>
                         <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">メールアドレス <span className="text-red-500">*</span></label>
-                        <input type="email" id="email" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="name@company.com" required />
+                        <input type="email" id="email" name="email" className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="name@company.com" required />
                         </div>
 
                         <div>
                         <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">ご相談の概要・背景</label>
-                        <textarea id="message" rows={4} className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="例：新規事業部門を立ち上げたが、進め方に悩んでいる。来期に向けたロードマップを策定したい等"></textarea>
+                        <textarea id="message" name="message" rows={4} className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 bg-slate-50 border" placeholder="例：新規事業部門を立ち上げたが、進め方に悩んでいる。来期に向けたロードマップを策定したい等"></textarea>
                         </div>
 
                         <div className="pt-2">
-                        <button type="button" onClick={() => alert('デモサイトのため送信されません')} className="w-full bg-indigo-900 text-white font-bold py-4 rounded hover:bg-indigo-800 transition-colors shadow-md flex justify-center items-center">
-                            無料で日程調整へ進む
-                            <ChevronRight className="ml-2 w-5 h-5" />
+                        <button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className={`w-full text-white font-bold py-4 rounded transition-colors shadow-md flex justify-center items-center ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-900 hover:bg-indigo-800'}`}
+                        >
+                            {isSubmitting ? '送信中...' : '無料で日程調整へ進む'}
+                            {!isSubmitting && <ChevronRight className="ml-2 w-5 h-5" />}
                         </button>
-                        <p className="text-center text-xs text-slate-400 mt-4">
-                            ※ 送信後、日程調整用のカレンダーURLが自動送信されます。
-                        </p>
                         </div>
                     </form>
                     </div>
                 </div>
+                </div>
+            );
+        };
+
+        const ThanksPage = ({ navigateTo }) => {
+            useEffect(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                lucide.createIcons();
+            }, []);
+
+            return (
+                <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center justify-center">
+                    <div className="text-center max-w-lg">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Check className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-slate-900 mb-4">お問い合わせありがとうございます</h1>
+                        <p className="text-slate-600 mb-8 leading-relaxed">
+                            フォームの送信が完了いたしました。<br/>
+                            ご入力いただいたメールアドレス宛に、<br/>自動返信メールをお送りしております。<br/><br/>
+                            内容を確認の上、担当者より1営業日以内にご連絡させていただきます。
+                        </p>
+                        <button 
+                            onClick={() => navigateTo('home')}
+                            className="bg-indigo-900 hover:bg-indigo-800 text-white px-8 py-3 rounded text-base font-bold transition-colors shadow-md inline-flex items-center"
+                        >
+                            <ArrowLeft className="mr-2 w-5 h-5" />
+                            トップページへ戻る
+                        </button>
+                    </div>
                 </div>
             );
         };
