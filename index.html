@@ -78,6 +78,7 @@
         const Calendar = (props) => <Icon name="calendar" {...props} />;
         const PenTool = (props) => <Icon name="pen-tool" {...props} />;
         const Check = (props) => <Icon name="check" {...props} />;
+        const BrainCircuit = (props) => <Icon name="brain-circuit" {...props} />;
 
         // --- Mock Data (編集エリア) ---
         const allInsights = [
@@ -108,6 +109,16 @@
         ];
 
         const allCaseNotes = [
+            // --- 新規追加事例 (AD/ADAS) ---
+            {
+                id: 4,
+                industry: '自動車・モビリティ',
+                title: 'AD/ADAS領域：市場参入戦略策定と事業ロードマップ策定・PMO',
+                period: '10ヶ月',
+                tags: ['市場調査', '戦略策定', 'PMO'],
+                description: '自動運転・先進運転支援システム領域において、国内外の市場・競合調査を実施し、自社の技術的優位性が活きる勝ち筋を導出。ビジネスプランおよび中長期ロードマップの策定から、開発プロジェクトのPMOまでを包括的に支援。'
+            },
+            // ---------------------------
             {
                 id: 1,
                 industry: '自動車・モビリティ',
@@ -137,16 +148,12 @@
         // --- Components ---
 
         const App = () => {
-            // URLハッシュから現在のページを判定する関数
             const getPageFromHash = () => {
                 const hash = window.location.hash.replace('#', '');
-                // 独立したページとして扱うID
                 const independentPages = ['cases', 'insights', 'contact', 'thanks'];
-                
                 if (independentPages.includes(hash)) {
                     return hash;
                 }
-                // それ以外（空、home、あるいはページ内セクションID）はすべてhome扱い
                 return 'home';
             };
 
@@ -155,24 +162,17 @@
 
             const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-            // ハッシュ変更を検知してページ遷移とスクロール制御を行う
             useEffect(() => {
                 const handleHashChange = () => {
                     const newPage = getPageFromHash();
                     setCurrentPage(newPage);
-                    
                     const hash = window.location.hash.replace('#', '');
                     
-                    // スクロール制御
                     if (['cases', 'insights', 'contact', 'thanks'].includes(hash)) {
-                        // 独立ページへの遷移時はトップへ
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else if (hash === 'home' || hash === '') {
-                        // ホームへの遷移時はトップへ
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
-                        // ホーム内のセクションIDへの遷移時（例: #reasons）
-                        // DOMの描画を待ってからスクロール
                         setTimeout(() => {
                             const element = document.getElementById(hash);
                             if (element) {
@@ -182,7 +182,6 @@
                     }
                 };
 
-                // 初期ロード時のハッシュに応じた処理
                 if (window.location.hash) {
                     handleHashChange();
                 }
@@ -191,17 +190,10 @@
                 return () => window.removeEventListener('hashchange', handleHashChange);
             }, []);
 
-            // ページ遷移関数（ハッシュを更新するだけ）
             const navigateTo = (destination, sectionId = null) => {
                 setIsMenuOpen(false);
-                
-                // sectionIdがある場合はそれをハッシュにする（例: #reasons）
-                // ない場合はdestinationをハッシュにする（例: #cases）
                 const targetHash = sectionId ? sectionId : destination;
-                
-                // 現在のハッシュと同じ場合は強制的にスクロール処理等をキックするために履歴操作
                 if (window.location.hash === `#${targetHash}`) {
-                    // 同じ場所への遷移でもイベントを発火させたい場合などの簡易対応
                     const element = document.getElementById(targetHash);
                     if (element) element.scrollIntoView({ behavior: 'smooth' });
                 } else {
@@ -211,7 +203,6 @@
 
             return (
                 <div className="font-sans text-slate-800 bg-white antialiased selection:bg-indigo-100 selection:text-indigo-900 min-h-screen flex flex-col">
-                {/* Navigation */}
                 <nav className="fixed w-full z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
@@ -222,7 +213,6 @@
                         <span className="font-bold text-xl tracking-tight text-slate-900">Uni Consulting</span>
                         </div>
                         
-                        {/* Desktop Menu */}
                         <div className="hidden md:flex items-center space-x-8">
                         <button onClick={() => navigateTo('home', 'reasons')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">選ばれる理由</button>
                         <button onClick={() => navigateTo('home', 'plans')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">サービスプラン</button>
@@ -236,7 +226,6 @@
                         </button>
                         </div>
 
-                        {/* Mobile menu button */}
                         <div className="md:hidden flex items-center">
                         <button onClick={toggleMenu} className="text-slate-600 hover:text-slate-900 p-2">
                             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -245,7 +234,6 @@
                     </div>
                     </div>
 
-                    {/* Mobile Menu */}
                     {isMenuOpen && (
                     <div className="md:hidden bg-white border-b border-slate-100 px-4 pt-2 pb-6 space-y-4 shadow-lg h-screen overflow-y-auto">
                         <button onClick={() => navigateTo('home', 'reasons')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">選ばれる理由</button>
@@ -262,7 +250,6 @@
                     )}
                 </nav>
 
-                {/* Main Content Router */}
                 <div className="flex-grow">
                     {currentPage === 'home' && <HomePage navigateTo={navigateTo} />}
                     {currentPage === 'cases' && <CasesPage navigateTo={navigateTo} />}
@@ -271,7 +258,6 @@
                     {currentPage === 'thanks' && <ThanksPage navigateTo={navigateTo} />}
                 </div>
 
-                {/* Footer (Always visible) */}
                 <footer className="bg-slate-900 py-12 border-t border-slate-800 text-slate-400">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -384,9 +370,9 @@
                 <div className="grid md:grid-cols-3 gap-8">
                 {[
                     {
-                    icon: <Lightbulb className="w-8 h-8 text-indigo-500" />,
-                    title: "Whyが言えない",
-                    desc: "新規事業のアイデアはあるが、「なぜ自社が勝てるのか」「なぜ今やるのか」を論理的に説明しきれない。"
+                    icon: <BrainCircuit className="w-8 h-8 text-indigo-500" />,
+                    title: "「勝ち筋」を言語化できない",
+                    desc: "「なんとなくの勝算」はある。しかし、それを組織が納得する『必然性』や『競争優位』としてロジックに落とし込めず、企画が前に進まない。"
                     },
                     {
                     icon: <Layers className="w-8 h-8 text-indigo-500" />,
@@ -722,6 +708,169 @@
             </section>
         </>
         );
+
+        const CasesPage = ({ navigateTo }) => {
+            const [filter, setFilter] = useState('All');
+            const industries = ['All', '自動車・モビリティ', '製造業', 'EC・小売', 'デジタルサービス'];
+
+            const filteredCases = filter === 'All' 
+                ? allCaseNotes 
+                : allCaseNotes.filter(n => n.industry === filter);
+
+            useEffect(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }, [filter]);
+
+            return (
+                <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
+                <button onClick={() => navigateTo('home')} className="mb-6 flex items-center text-slate-500 hover:text-indigo-900 transition-colors">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> トップへ戻る
+                </button>
+
+                <div className="mb-12">
+                    <h1 className="text-4xl font-bold text-slate-900 mb-4">支援事例一覧</h1>
+                    <p className="text-slate-600">
+                    様々な業界での「構想〜実装」までの支援実績の一部をご紹介します。<br/>
+                    守秘義務の関係上、掲載できない事例も多数ございます。詳細はお問い合わせください。
+                    </p>
+                </div>
+
+                <div className="mb-10 flex flex-wrap gap-2">
+                    {industries.map(ind => (
+                    <button
+                        key={ind}
+                        onClick={() => setFilter(ind)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        filter === ind 
+                        ? 'bg-indigo-900 text-white' 
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        {ind}
+                    </button>
+                    ))}
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                    {filteredCases.map((note) => (
+                    <div key={note.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="p-6 flex flex-col h-full">
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded">{note.industry}</span>
+                            <span className="text-slate-400 text-xs">{note.period}</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-3 leading-snug">
+                            {note.title}
+                        </h3>
+                        <p className="text-slate-600 text-sm leading-relaxed mb-4 flex-grow">
+                            {note.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50">
+                            {note.tags.map((tag, tIdx) => (
+                            <span key={tIdx} className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100">#{tag}</span>
+                            ))}
+                        </div>
+                        </div>
+                    </div>
+                    ))}
+                </div>
+
+                <div className="bg-indigo-50 rounded-2xl p-8 md:p-12 text-center">
+                    <h3 className="text-2xl font-bold text-indigo-900 mb-4">類似の課題をお持ちですか？</h3>
+                    <p className="text-slate-600 mb-8">
+                    貴社の業界・状況に合わせた事例のご紹介や、<br className="hidden md:block"/>
+                    アプローチ方法のご提案も可能です。まずはお気軽にご相談ください。
+                    </p>
+                    <button onClick={() => navigateTo('contact')} className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-indigo-900 rounded hover:bg-indigo-800 transition-colors shadow-md">
+                    事例について詳しく聞く
+                    <ChevronRight className="ml-2 w-5 h-5" />
+                    </button>
+                </div>
+                </div>
+            );
+        };
+
+        const InsightsPage = ({ navigateTo }) => {
+            const [filter, setFilter] = useState('All');
+            const categories = ['All', '強み言語化', '勝ち筋設計', '競合・顧客理解', '推進・組織', 'PoC→ローンチ'];
+
+            const filteredInsights = filter === 'All' 
+                ? allInsights 
+                : allInsights.filter(i => i.category === filter);
+
+            useEffect(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }, [filter]);
+
+            return (
+                <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
+                <button onClick={() => navigateTo('home')} className="mb-6 flex items-center text-slate-500 hover:text-indigo-900 transition-colors">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> トップへ戻る
+                </button>
+
+                <div className="mb-12">
+                    <h1 className="text-4xl font-bold text-slate-900 mb-4">知見・ナレッジ</h1>
+                    <p className="text-slate-600">
+                    新規事業開発における思考の枠組みや、実践的なノウハウを発信しています。<br/>
+                    表面的なトレンドではなく、事業を前に進めるための「本質」をお伝えします。
+                    </p>
+                </div>
+
+                <div className="mb-10 flex flex-wrap gap-2">
+                    {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setFilter(cat)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        filter === cat 
+                        ? 'bg-indigo-900 text-white' 
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                    ))}
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                    {filteredInsights.map((insight) => (
+                    <article key={insight.id} className="flex flex-col group cursor-pointer bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-all">
+                            <div className="mb-3 flex items-center gap-3 text-xs">
+                            <span className="text-indigo-600 font-bold uppercase tracking-wider">{insight.category}</span>
+                            <span className="text-slate-400">{insight.date}</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-indigo-900 transition-colors">
+                            {insight.title}
+                            </h3>
+                            <p className="text-slate-600 text-sm leading-relaxed mb-4 flex-grow">
+                            {insight.summary}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                            {insight.tags.map((tag, tIdx) => (
+                                <span key={tIdx} className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-100">#{tag}</span>
+                            ))}
+                            </div>
+                            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center text-sm font-bold text-slate-900 group-hover:text-indigo-700">
+                            Read More <ArrowRight className="w-4 h-4 ml-2" />
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                <div className="bg-slate-900 rounded-2xl p-8 md:p-12 text-center text-white">
+                    <h3 className="text-2xl font-bold mb-4">読んだだけでは解決しない課題がありますか？</h3>
+                    <p className="text-indigo-200 mb-8">
+                    記事の内容を自社に当てはめて考えたい場合や、具体的な壁打ちをご希望の場合は、<br className="hidden md:block"/>
+                    お気軽に無料相談をご利用ください。
+                    </p>
+                    <button onClick={() => navigateTo('contact')} className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-indigo-900 bg-white rounded hover:bg-indigo-50 transition-colors shadow-md">
+                    無料相談について見る
+                    <ChevronRight className="ml-2 w-5 h-5" />
+                    </button>
+                </div>
+                </div>
+            );
+        };
 
         const ContactPage = ({ navigateTo }) => {
             const [isSubmitting, setIsSubmitting] = useState(false);
