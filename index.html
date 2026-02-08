@@ -41,10 +41,14 @@
                     i.setAttribute('width', size);
                     i.setAttribute('height', size);
                     ref.current.appendChild(i);
-                    lucide.createIcons({
-                        root: ref.current,
-                        nameAttr: 'data-lucide'
-                    });
+                    
+                    // lucideオブジェクトが存在する場合のみ実行
+                    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                        lucide.createIcons({
+                            root: ref.current,
+                            nameAttr: 'data-lucide'
+                        });
+                    }
                 }
             }, [name, size]);
 
@@ -109,7 +113,6 @@
         ];
 
         const allCaseNotes = [
-            // --- 新規追加事例 (AD/ADAS) ---
             {
                 id: 4,
                 industry: '自動車・モビリティ',
@@ -118,7 +121,6 @@
                 tags: ['市場調査', '戦略策定', 'PMO'],
                 description: '自動運転・先進運転支援システム領域において、国内外の市場・競合調査を実施し、自社の技術的優位性が活きる勝ち筋を導出。ビジネスプランおよび中長期ロードマップの策定から、開発プロジェクトのPMOまでを包括的に支援。'
             },
-            // ---------------------------
             {
                 id: 1,
                 industry: '自動車・モビリティ',
@@ -145,166 +147,7 @@
             }
         ];
 
-        // --- Components ---
-
-        const App = () => {
-            const getPageFromHash = () => {
-                const hash = window.location.hash.replace('#', '');
-                const independentPages = ['cases', 'insights', 'contact', 'thanks'];
-                if (independentPages.includes(hash)) {
-                    return hash;
-                }
-                return 'home';
-            };
-
-            const [currentPage, setCurrentPage] = useState(getPageFromHash());
-            const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-            const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-            useEffect(() => {
-                const handleHashChange = () => {
-                    const newPage = getPageFromHash();
-                    setCurrentPage(newPage);
-                    const hash = window.location.hash.replace('#', '');
-                    
-                    if (['cases', 'insights', 'contact', 'thanks'].includes(hash)) {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    } else if (hash === 'home' || hash === '') {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    } else {
-                        setTimeout(() => {
-                            const element = document.getElementById(hash);
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth' });
-                            }
-                        }, 100);
-                    }
-                };
-
-                if (window.location.hash) {
-                    handleHashChange();
-                }
-
-                window.addEventListener('hashchange', handleHashChange);
-                return () => window.removeEventListener('hashchange', handleHashChange);
-            }, []);
-
-            const navigateTo = (destination, sectionId = null) => {
-                setIsMenuOpen(false);
-                const targetHash = sectionId ? sectionId : destination;
-                if (window.location.hash === `#${targetHash}`) {
-                    const element = document.getElementById(targetHash);
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    window.location.hash = targetHash;
-                }
-            };
-
-            return (
-                <div className="font-sans text-slate-800 bg-white antialiased selection:bg-indigo-100 selection:text-indigo-900 min-h-screen flex flex-col">
-                <nav className="fixed w-full z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-20 items-center">
-                        <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
-                        <div className="w-8 h-8 bg-indigo-900 flex items-center justify-center rounded-sm">
-                            <span className="text-white font-bold text-lg">U</span>
-                        </div>
-                        <span className="font-bold text-xl tracking-tight text-slate-900">Uni Consulting</span>
-                        </div>
-                        
-                        <div className="hidden md:flex items-center space-x-8">
-                        <button onClick={() => navigateTo('home', 'reasons')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">選ばれる理由</button>
-                        <button onClick={() => navigateTo('home', 'plans')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">サービスプラン</button>
-                        <button onClick={() => navigateTo('cases')} className={`text-sm font-medium transition-colors ${currentPage === 'cases' ? 'text-indigo-900 font-bold' : 'text-slate-600 hover:text-indigo-900'}`}>事例</button>
-                        <button onClick={() => navigateTo('insights')} className={`text-sm font-medium transition-colors ${currentPage === 'insights' ? 'text-indigo-900 font-bold' : 'text-slate-600 hover:text-indigo-900'}`}>知見</button>
-                        <button 
-                            onClick={() => navigateTo('contact')}
-                            className="bg-indigo-900 hover:bg-indigo-800 text-white px-5 py-2.5 rounded text-sm font-medium transition-colors shadow-sm"
-                        >
-                            無料相談を予約する
-                        </button>
-                        </div>
-
-                        <div className="md:hidden flex items-center">
-                        <button onClick={toggleMenu} className="text-slate-600 hover:text-slate-900 p-2">
-                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
-                        </div>
-                    </div>
-                    </div>
-
-                    {isMenuOpen && (
-                    <div className="md:hidden bg-white border-b border-slate-100 px-4 pt-2 pb-6 space-y-4 shadow-lg h-screen overflow-y-auto">
-                        <button onClick={() => navigateTo('home', 'reasons')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">選ばれる理由</button>
-                        <button onClick={() => navigateTo('home', 'plans')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">サービスプラン</button>
-                        <button onClick={() => navigateTo('cases')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">事例</button>
-                        <button onClick={() => navigateTo('insights')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">知見</button>
-                        <button 
-                            onClick={() => navigateTo('contact')}
-                            className="w-full mt-4 bg-indigo-900 text-white px-5 py-3 rounded text-base font-medium"
-                        >
-                            無料相談を予約する
-                        </button>
-                    </div>
-                    )}
-                </nav>
-
-                <div className="flex-grow">
-                    {currentPage === 'home' && <HomePage navigateTo={navigateTo} />}
-                    {currentPage === 'cases' && <CasesPage navigateTo={navigateTo} />}
-                    {currentPage === 'insights' && <InsightsPage navigateTo={navigateTo} />}
-                    {currentPage === 'contact' && <ContactPage navigateTo={navigateTo} />}
-                    {currentPage === 'thanks' && <ThanksPage navigateTo={navigateTo} />}
-                </div>
-
-                <footer className="bg-slate-900 py-12 border-t border-slate-800 text-slate-400">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid md:grid-cols-4 gap-8 mb-8">
-                        <div className="col-span-1 md:col-span-1">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-6 h-6 bg-white flex items-center justify-center rounded-sm">
-                                <span className="text-indigo-900 font-bold text-xs">U</span>
-                            </div>
-                            <span className="font-bold text-white">Uni Consulting</span>
-                        </div>
-                        <p className="text-xs leading-relaxed">
-                            新規事業開発・事業推進に特化した<br/>ブティックコンサルティングファーム
-                        </p>
-                        </div>
-                        <div>
-                        <h4 className="text-white font-bold mb-4 text-sm">Services</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><button onClick={() => navigateTo('home')} className="hover:text-white transition-colors">新規事業開発支援</button></li>
-                            <li><button onClick={() => navigateTo('home')} className="hover:text-white transition-colors">PMO・実行支援</button></li>
-                            <li><button onClick={() => navigateTo('contact')} className="hover:text-white transition-colors">スポット相談</button></li>
-                        </ul>
-                        </div>
-                        <div>
-                        <h4 className="text-white font-bold mb-4 text-sm">Contents</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><button onClick={() => navigateTo('insights')} className="hover:text-white transition-colors">Insights (知見)</button></li>
-                            <li><button onClick={() => navigateTo('cases')} className="hover:text-white transition-colors">Case Notes (事例)</button></li>
-                        </ul>
-                        </div>
-                        <div>
-                        <h4 className="text-white font-bold mb-4 text-sm">Contact</h4>
-                        <ul className="space-y-2 text-sm">
-                            <li><button onClick={() => navigateTo('contact')} className="hover:text-white transition-colors">お問い合わせ</button></li>
-                            <li><button className="hover:text-white transition-colors">プライバシーポリシー</button></li>
-                        </ul>
-                        </div>
-                    </div>
-                    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-                        <p>© 2026 Uni Consulting. All rights reserved.</p>
-                    </div>
-                    </div>
-                </footer>
-                </div>
-            );
-        };
-
-        // --- Page Components ---
+        // --- Page Components (Defined before App to ensure initialization) ---
 
         const HomePage = ({ navigateTo }) => (
         <>
@@ -718,7 +561,8 @@
                 : allCaseNotes.filter(n => n.industry === filter);
 
             useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                // スクロール処理を 'auto' に変更して互換性を向上
+                window.scrollTo({ top: 0, behavior: 'auto' });
             }, [filter]);
 
             return (
@@ -799,7 +643,8 @@
                 : allInsights.filter(i => i.category === filter);
 
             useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                // スクロール処理を 'auto' に変更して互換性を向上
+                window.scrollTo({ top: 0, behavior: 'auto' });
             }, [filter]);
 
             return (
@@ -876,8 +721,7 @@
             const [isSubmitting, setIsSubmitting] = useState(false);
 
             useEffect(() => {
-                // スクロールトップはAppコンポーネントのハッシュハンドラーで制御されるため削除
-                lucide.createIcons();
+                // lucide.createIcons()の重複呼び出しを削除
             }, []);
 
             const handleSubmit = async (e) => {
@@ -1013,8 +857,7 @@
 
         const ThanksPage = ({ navigateTo }) => {
             useEffect(() => {
-                // スクロールトップはAppコンポーネントのハッシュハンドラーで制御されるため削除
-                lucide.createIcons();
+                // lucide.createIcons()の重複呼び出しを削除
             }, []);
 
             return (
@@ -1037,6 +880,163 @@
                             トップページへ戻る
                         </button>
                     </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const getPageFromHash = () => {
+                const hash = window.location.hash.replace('#', '');
+                const independentPages = ['cases', 'insights', 'contact', 'thanks'];
+                if (independentPages.includes(hash)) {
+                    return hash;
+                }
+                return 'home';
+            };
+
+            const [currentPage, setCurrentPage] = useState(getPageFromHash());
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+            const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+            useEffect(() => {
+                const handleHashChange = () => {
+                    const newPage = getPageFromHash();
+                    setCurrentPage(newPage);
+                    const hash = window.location.hash.replace('#', '');
+                    
+                    if (['cases', 'insights', 'contact', 'thanks'].includes(hash)) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else if (hash === 'home' || hash === '') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        setTimeout(() => {
+                            const element = document.getElementById(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }, 100);
+                    }
+                };
+
+                if (window.location.hash) {
+                    handleHashChange();
+                }
+
+                window.addEventListener('hashchange', handleHashChange);
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, []);
+
+            const navigateTo = (destination, sectionId = null) => {
+                setIsMenuOpen(false);
+                const targetHash = sectionId ? sectionId : destination;
+                if (window.location.hash === `#${targetHash}`) {
+                    const element = document.getElementById(targetHash);
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    window.location.hash = targetHash;
+                }
+            };
+
+            return (
+                <div className="font-sans text-slate-800 bg-white antialiased selection:bg-indigo-100 selection:text-indigo-900 min-h-screen flex flex-col">
+                <nav className="fixed w-full z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-20 items-center">
+                        <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
+                        <div className="w-8 h-8 bg-indigo-900 flex items-center justify-center rounded-sm">
+                            <span className="text-white font-bold text-lg">U</span>
+                        </div>
+                        <span className="font-bold text-xl tracking-tight text-slate-900">Uni Consulting</span>
+                        </div>
+                        
+                        <div className="hidden md:flex items-center space-x-8">
+                        <button onClick={() => navigateTo('home', 'reasons')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">選ばれる理由</button>
+                        <button onClick={() => navigateTo('home', 'plans')} className="text-sm font-medium text-slate-600 hover:text-indigo-900 transition-colors">サービスプラン</button>
+                        <button onClick={() => navigateTo('cases')} className={`text-sm font-medium transition-colors ${currentPage === 'cases' ? 'text-indigo-900 font-bold' : 'text-slate-600 hover:text-indigo-900'}`}>事例</button>
+                        <button onClick={() => navigateTo('insights')} className={`text-sm font-medium transition-colors ${currentPage === 'insights' ? 'text-indigo-900 font-bold' : 'text-slate-600 hover:text-indigo-900'}`}>知見</button>
+                        <button 
+                            onClick={() => navigateTo('contact')}
+                            className="bg-indigo-900 hover:bg-indigo-800 text-white px-5 py-2.5 rounded text-sm font-medium transition-colors shadow-sm"
+                        >
+                            無料相談を予約する
+                        </button>
+                        </div>
+
+                        <div className="md:hidden flex items-center">
+                        <button onClick={toggleMenu} className="text-slate-600 hover:text-slate-900 p-2">
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+
+                    {isMenuOpen && (
+                    <div className="md:hidden bg-white border-b border-slate-100 px-4 pt-2 pb-6 space-y-4 shadow-lg h-screen overflow-y-auto">
+                        <button onClick={() => navigateTo('home', 'reasons')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">選ばれる理由</button>
+                        <button onClick={() => navigateTo('home', 'plans')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">サービスプラン</button>
+                        <button onClick={() => navigateTo('cases')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">事例</button>
+                        <button onClick={() => navigateTo('insights')} className="block w-full text-left py-3 text-base font-medium text-slate-600 hover:text-indigo-900 border-b border-slate-50">知見</button>
+                        <button 
+                            onClick={() => navigateTo('contact')}
+                            className="w-full mt-4 bg-indigo-900 text-white px-5 py-3 rounded text-base font-medium"
+                        >
+                            無料相談を予約する
+                        </button>
+                    </div>
+                    )}
+                </nav>
+
+                <div className="flex-grow">
+                    {currentPage === 'home' && <HomePage navigateTo={navigateTo} />}
+                    {currentPage === 'cases' && <CasesPage navigateTo={navigateTo} />}
+                    {currentPage === 'insights' && <InsightsPage navigateTo={navigateTo} />}
+                    {currentPage === 'contact' && <ContactPage navigateTo={navigateTo} />}
+                    {currentPage === 'thanks' && <ThanksPage navigateTo={navigateTo} />}
+                </div>
+
+                <footer className="bg-slate-900 py-12 border-t border-slate-800 text-slate-400">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid md:grid-cols-4 gap-8 mb-8">
+                        <div className="col-span-1 md:col-span-1">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-6 h-6 bg-white flex items-center justify-center rounded-sm">
+                                <span className="text-indigo-900 font-bold text-xs">U</span>
+                            </div>
+                            <span className="font-bold text-white">Uni Consulting</span>
+                        </div>
+                        <p className="text-xs leading-relaxed">
+                            新規事業開発・事業推進に特化した<br/>ブティックコンサルティングファーム
+                        </p>
+                        </div>
+                        <div>
+                        <h4 className="text-white font-bold mb-4 text-sm">Services</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><button onClick={() => navigateTo('home')} className="hover:text-white transition-colors">新規事業開発支援</button></li>
+                            <li><button onClick={() => navigateTo('home')} className="hover:text-white transition-colors">PMO・実行支援</button></li>
+                            <li><button onClick={() => navigateTo('contact')} className="hover:text-white transition-colors">スポット相談</button></li>
+                        </ul>
+                        </div>
+                        <div>
+                        <h4 className="text-white font-bold mb-4 text-sm">Contents</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><button onClick={() => navigateTo('insights')} className="hover:text-white transition-colors">Insights (知見)</button></li>
+                            <li><button onClick={() => navigateTo('cases')} className="hover:text-white transition-colors">Case Notes (事例)</button></li>
+                        </ul>
+                        </div>
+                        <div>
+                        <h4 className="text-white font-bold mb-4 text-sm">Contact</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li><button onClick={() => navigateTo('contact')} className="hover:text-white transition-colors">お問い合わせ</button></li>
+                            <li><button className="hover:text-white transition-colors">プライバシーポリシー</button></li>
+                        </ul>
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+                        <p>© 2026 Uni Consulting. All rights reserved.</p>
+                    </div>
+                    </div>
+                </footer>
                 </div>
             );
         };
