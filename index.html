@@ -20,6 +20,7 @@
 
     <style>
         body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body>
@@ -28,35 +29,25 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- Icon Wrapper Component for Lucide (Fixed for React 18) ---
-        // Reactの管理下にあるDOMをLucideが書き換えてしまうことによるエラーを防ぐため、
-        // refを使用してReactの管理外（Black Box）でアイコンを描画します。
+        // --- Icon Wrapper Component for Lucide ---
         const Icon = ({ name, size = 24, className, ...props }) => {
             const ref = useRef(null);
 
             useEffect(() => {
                 if (ref.current) {
-                    // クリーンアップ
                     ref.current.innerHTML = '';
-                    
-                    // Lucideが変換するための要素を作成
                     const i = document.createElement('i');
                     i.setAttribute('data-lucide', name);
                     i.setAttribute('width', size);
                     i.setAttribute('height', size);
-                    
-                    // 作成した要素をマウント
                     ref.current.appendChild(i);
-                    
-                    // この要素に対してのみLucideを実行
                     lucide.createIcons({
                         root: ref.current,
                         nameAttr: 'data-lucide'
                     });
                 }
-            }, [name, size]); // 名前やサイズが変わった時のみ再描画
+            }, [name, size]);
 
-            // ラッパーのspan要素（ここにはclassNameやイベントハンドラを適用）
             return (
                 <span 
                     ref={ref} 
@@ -88,7 +79,7 @@
         const PenTool = (props) => <Icon name="pen-tool" {...props} />;
         const Check = (props) => <Icon name="check" {...props} />;
 
-        // --- Mock Data ---
+        // --- Mock Data (編集エリア) ---
         const allInsights = [
             {
                 id: 1,
@@ -146,23 +137,75 @@
         // --- Components ---
 
         const App = () => {
-            const [currentPage, setCurrentPage] = useState('home');
+            // URLハッシュから現在のページを判定する関数
+            const getPageFromHash = () => {
+                const hash = window.location.hash.replace('#', '');
+                // 独立したページとして扱うID
+                const independentPages = ['cases', 'insights', 'contact', 'thanks'];
+                
+                if (independentPages.includes(hash)) {
+                    return hash;
+                }
+                // それ以外（空、home、あるいはページ内セクションID）はすべてhome扱い
+                return 'home';
+            };
+
+            const [currentPage, setCurrentPage] = useState(getPageFromHash());
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
             const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-            const navigateTo = (page, sectionId = null) => {
-                setCurrentPage(page);
+            // ハッシュ変更を検知してページ遷移とスクロール制御を行う
+            useEffect(() => {
+                const handleHashChange = () => {
+                    const newPage = getPageFromHash();
+                    setCurrentPage(newPage);
+                    
+                    const hash = window.location.hash.replace('#', '');
+                    
+                    // スクロール制御
+                    if (['cases', 'insights', 'contact', 'thanks'].includes(hash)) {
+                        // 独立ページへの遷移時はトップへ
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else if (hash === 'home' || hash === '') {
+                        // ホームへの遷移時はトップへ
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        // ホーム内のセクションIDへの遷移時（例: #reasons）
+                        // DOMの描画を待ってからスクロール
+                        setTimeout(() => {
+                            const element = document.getElementById(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }, 100);
+                    }
+                };
+
+                // 初期ロード時のハッシュに応じた処理
+                if (window.location.hash) {
+                    handleHashChange();
+                }
+
+                window.addEventListener('hashchange', handleHashChange);
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, []);
+
+            // ページ遷移関数（ハッシュを更新するだけ）
+            const navigateTo = (destination, sectionId = null) => {
                 setIsMenuOpen(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
                 
-                if (sectionId && page === 'home') {
-                    setTimeout(() => {
-                        const element = document.getElementById(sectionId);
-                        if (element) {
-                            element.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }, 100);
+                // sectionIdがある場合はそれをハッシュにする（例: #reasons）
+                // ない場合はdestinationをハッシュにする（例: #cases）
+                const targetHash = sectionId ? sectionId : destination;
+                
+                // 現在のハッシュと同じ場合は強制的にスクロール処理等をキックするために履歴操作
+                if (window.location.hash === `#${targetHash}`) {
+                    // 同じ場所への遷移でもイベントを発火させたい場合などの簡易対応
+                    const element = document.getElementById(targetHash);
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    window.location.hash = targetHash;
                 }
             };
 
@@ -684,7 +727,7 @@
             const [isSubmitting, setIsSubmitting] = useState(false);
 
             useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                // スクロールトップはAppコンポーネントのハッシュハンドラーで制御されるため削除
                 lucide.createIcons();
             }, []);
 
@@ -821,7 +864,7 @@
 
         const ThanksPage = ({ navigateTo }) => {
             useEffect(() => {
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                // スクロールトップはAppコンポーネントのハッシュハンドラーで制御されるため削除
                 lucide.createIcons();
             }, []);
 
